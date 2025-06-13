@@ -16,9 +16,12 @@ public class AuthService : IAuthService
 
     public async Task<string> RegisterDoctor(DoctorRegisterDto dto)
     {
+        // Prevent registration if username already exists
         if (await _doctorRepo.DoctorExists(dto.Username)) return null;
 
+        // Securely hash the password
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+
         var doctor = new Doctor
         {
             Name = dto.Name,
@@ -34,19 +37,23 @@ public class AuthService : IAuthService
 
     public async Task<string> LoginDoctor(DoctorLoginDto dto)
     {
+        // Validate user credentials
         var user = await _doctorRepo.GetByUsername(dto.Username);
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             return null;
 
+        // Create JWT claims for the user
         var claims = new[]
         {
             new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.Role, "Doctor")
         };
 
+        // Create security key and credentials
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+        // Generate JWT token
         var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],
