@@ -1,0 +1,6 @@
+@helatcaremanagemnet_HostAddress = http://localhost:5049
+
+GET {{helatcaremanagemnet_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
